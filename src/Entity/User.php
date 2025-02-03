@@ -54,6 +54,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?bool $is_gpdr = null;
 
+    #[ORM\OneToOne(mappedBy: 'pro', cascade: ['persist', 'remove'])]
+    private ?Detail $detail = null;
+
       // Constructeur pour gérer les attributs non-nullables par défault
       public function __construct()
       {
@@ -228,6 +231,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setIsGpdr(bool $is_gpdr): static
     {
         $this->is_gpdr = $is_gpdr;
+
+        return $this;
+    }
+
+    public function getDetail(): ?Detail
+    {
+        return $this->detail;
+    }
+
+    public function setDetail(Detail $detail): static
+    {
+        // set the owning side of the relation if necessary
+        if ($detail->getPro() !== $this) {
+            $detail->setPro($this);
+        }
+
+        $this->detail = $detail;
 
         return $this;
     }
