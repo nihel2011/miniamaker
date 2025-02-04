@@ -8,6 +8,8 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SubscriptionRepository::class)]
+#[ORM\HasLifecycleCallbacks]
+
 class Subscription
 {
     #[ORM\Id]
@@ -18,7 +20,13 @@ class Subscription
     #[ORM\Column]
     private ?bool $is_active = null;
 
-    #[ORM\Column]
+    #[
+        ORM\Column(
+            type: 'decimal',
+            precision: 7,
+            scale: 2
+        )
+    ]
     private ?int $amount = null;
 
     #[ORM\Column(length: 80)]
@@ -47,6 +55,22 @@ class Subscription
     public function __construct()
     {
         $this->promos = new ArrayCollection();
+        $this->is_active = false;
+        $this->amount = 99.97;
+        $this->frequency = 'monthly';
+    }
+
+    #[ORM\PrePersist]
+    public function setCreatedAtValue(): void
+    {
+        $this->created_at = new \DateTimeImmutable();
+        $this->updated_at = new \DateTimeImmutable();
+    }
+
+    #[ORM\PreUpdate]
+    public function setUpdatedAtValue(): void
+    {
+        $this->updated_at = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -167,4 +191,9 @@ class Subscription
 
         return $this;
     }
+
+    // public function __toString(): string
+    // {
+    //     return $this->frequency;
+    // }
 }

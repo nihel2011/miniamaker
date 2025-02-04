@@ -8,6 +8,8 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: LandingPageRepository::class)]
+#[ORM\HasLifecycleCallbacks]
+
 class LandingPage
 {
     #[ORM\Id]
@@ -28,25 +30,36 @@ class LandingPage
     #[ORM\OneToOne(mappedBy: 'landing_page_id', cascade: ['persist', 'remove'])]
     private ?LpContent $lpContent = null;
 
-    #[ORM\ManyToOne(inversedBy: 'landing_page_id')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?TagLandingPage $tagLandingPage = null;
 
-    /**
-     * @var Collection<int, TagLandingPage>
-     */
-    #[ORM\OneToMany(targetEntity: TagLandingPage::class, mappedBy: 'landing_page')]
-    private Collection $tagLandingPages;
 
     #[ORM\ManyToOne(inversedBy: 'landingPages')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Detail $detail = null;
 
+    /**
+     * @var Collection<int, Tag>
+     */
+    #[ORM\ManyToMany(targetEntity: Tag::class, mappedBy: 'landingPages')]
+    private Collection $tags;
+
     #[ORM\ManyToOne(inversedBy: 'landing_page_id')]
     #[ORM\JoinColumn(nullable: false)]
     public function __construct()
     {
-        $this->tagLandingPages = new ArrayCollection();
+        $this->tags = new ArrayCollection();
+    }
+
+    #[ORM\PrePersist]
+    public function onPrePersist()
+    {
+        $this->created_at = new \DateTimeImmutable();
+        $this->updated_at = new \DateTimeImmutable();
+    }
+
+    #[ORM\PreUpdate]
+    public function onPreUpdate()
+    {
+        $this->updated_at = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -108,47 +121,7 @@ class LandingPage
         return $this;
     }
 
-    public function getTagLandingPage(): ?TagLandingPage
-    {
-        return $this->tagLandingPage;
-    }
-
-    public function setTagLandingPage(?TagLandingPage $tagLandingPage): static
-    {
-        $this->tagLandingPage = $tagLandingPage;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, TagLandingPage>
-     */
-    public function getTagLandingPages(): Collection
-    {
-        return $this->tagLandingPages;
-    }
-
-    public function addTagLandingPage(TagLandingPage $tagLandingPage): static
-    {
-        if (!$this->tagLandingPages->contains($tagLandingPage)) {
-            $this->tagLandingPages->add($tagLandingPage);
-            $tagLandingPage->setLandingPage($this);
-        }
-
-        return $this;
-    }
-
-    public function removeTagLandingPage(TagLandingPage $tagLandingPage): static
-    {
-        if ($this->tagLandingPages->removeElement($tagLandingPage)) {
-            // set the owning side to null (unless already changed)
-            if ($tagLandingPage->getLandingPage() === $this) {
-                $tagLandingPage->setLandingPage(null);
-            }
-        }
-
-        return $this;
-    }
+    
 
     public function getDetail(): ?Detail
     {
@@ -158,6 +131,33 @@ class LandingPage
     public function setDetail(?Detail $detail): static
     {
         $this->detail = $detail;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Tag>
+     */
+    public function getTags(): Collection
+    {
+        return $this->tags;
+    }
+
+    public function addTag(Tag $tag): static
+    {
+        if (!$this->tags->contains($tag)) {
+            $this->tags->add($tag);
+            $tag->addLandingPage($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTag(Tag $tag): static
+    {
+        if ($this->tags->removeElement($tag)) {
+            $tag->removeLandingPage($this);
+        }
 
         return $this;
     }

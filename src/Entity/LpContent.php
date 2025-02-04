@@ -7,6 +7,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: LpContentRepository::class)]
+#[ORM\HasLifecycleCallbacks]
+
 class LpContent
 {
     #[ORM\Id]
@@ -29,6 +31,19 @@ class LpContent
     #[ORM\OneToOne(inversedBy: 'lpContent', cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Landingpage $landing_page_id = null;
+
+    #[ORM\PrePersist]
+    public function setCreatedAtValues(): void
+    {
+        $this->created_at = new \DateTimeImmutable();
+        $this->updated_at = new \DateTimeImmutable();
+    }
+
+    #[ORM\PreUpdate]
+    public function setUpdatedAtValues(): void
+    {
+        $this->updated_at = new \DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {
