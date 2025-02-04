@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\DetailRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DetailRepository::class)]
@@ -53,6 +55,16 @@ class Detail
     #[ORM\Column]
     private ?\DateTimeImmutable $updated_at = null;
 
+    #[ORM\ManyToOne(inversedBy: 'detail')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?LandingPage $landingPage = null;
+
+    /**
+     * @var Collection<int, LandingPage>
+     */
+    #[ORM\OneToMany(targetEntity: LandingPage::class, mappedBy: 'detail')]
+    private Collection $landingPages;
+
     // constructeur : les attributs non-nullables par defaut
     public function __construct()
     {
@@ -60,6 +72,7 @@ class Detail
         $this->portfolio_check = false;
         $this->strikes = 0; 
         $this->is_banned = false;
+        $this->landingPages = new ArrayCollection();
 
      }
     
@@ -258,5 +271,47 @@ class Detail
     function __toString(): string
     {
         return $this->company_name;
+    }
+
+    public function getLandingPage(): ?LandingPage
+    {
+        return $this->landingPage;
+    }
+
+    public function setLandingPage(?LandingPage $landingPage): static
+    {
+        $this->landingPage = $landingPage;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, LandingPage>
+     */
+    public function getLandingPages(): Collection
+    {
+        return $this->landingPages;
+    }
+
+    public function addLandingPage(LandingPage $landingPage): static
+    {
+        if (!$this->landingPages->contains($landingPage)) {
+            $this->landingPages->add($landingPage);
+            $landingPage->setDetail($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLandingPage(LandingPage $landingPage): static
+    {
+        if ($this->landingPages->removeElement($landingPage)) {
+            // set the owning side to null (unless already changed)
+            if ($landingPage->getDetail() === $this) {
+                $landingPage->setDetail(null);
+            }
+        }
+
+        return $this;
     }
 }
